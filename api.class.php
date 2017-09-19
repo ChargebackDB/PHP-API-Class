@@ -4,13 +4,16 @@
 $apiClass = new ChargeBackAPI("12345ABC");
 
 echo "Email:<BR>";
-echo $apiClass->searchDatabase("typroducts24@gmail.com", "email");
+echo $apiClass->searchDatabaseEmail("typroducts24@gmail.com");
 echo "<hr>IP";
-echo $apiClass->searchDatabase("127.0.1.2", "ip");
+echo $apiClass->searchDatabaseIP("127.0.1.2");
 echo "<hr>Username";
-echo $apiClass->searchDatabase("tyisobred", "username");
+echo $apiClass->searchDatabaseUsername("tyisobred");
 echo "<hr>PayPal Payer ID";
-echo $apiClass->searchDatabase("USD4444", "pp_PayerID");
+echo $apiClass->searchDatabasePayPalID("USD4444");
+echo "<hr>";
+echo "<hr>Txn ID";
+echo $apiClass->searchDatabaseTxnID("USD4444");
 echo "<hr>";
 
 
@@ -22,15 +25,14 @@ define('API_METHOD_DELETE', 4);
 
 class ChargeBackAPI
 {
-	private $apiVersion = "1.0";
 	private $endPointUrl;
-	public $timeout = 10;
-    public $debug = true;
-    public $advDebug = false; // Adds Extra details, WILL break production code
-    private $ApiVersion = '1.0';
+	private $timeout = 10;
+    private $debug = false;
+    private $advDebug = false; // Adds Extra details, WILL break production code
+    private $ApiVersion = "1.0";
 
     private $response;
-    public $responseCode;
+    private $responseCode;
 
     
     private $apiKey;
@@ -47,12 +49,42 @@ class ChargeBackAPI
     {
         // For retro-compatibility purposes check if $options is a string,
         // so if a user passes a string we use it as the app key.
-        if (is_string($options)) {
+        if (is_string($options)) 
+        {
             $this->apiKey = $options;
-        } elseif (is_array($options) && !empty($options['apiKey'])) {
-            $this->apiKey = $options['apiKey'];
-        } else {
-            throw new Exception('You need to specify an API key');
+        } 
+        elseif (is_array($options)) 
+        {
+            if(!empty($options['apiKey']))
+            {
+                $this->apiKey = $options['apiKey'];
+            }
+            else 
+            {
+                throw new Exception('You need to specify an API key');
+            }
+
+            // Check for custom parameters
+            if(!empty($options['debug']))
+            {
+                $this->debug = $options['debug'];
+            }
+            if(!empty($options['advDebug']))
+            {
+                $this->advDebug = $options['advDebug'];
+            }
+            if(!empty($options['timeout']))
+            {
+                $this->timeout = $options['timeout'];
+            }
+            if(!empty($options['apiVersion']))
+            {
+                $this->apiKey = $options['apiVersion'];
+            }
+        } 
+        else 
+        {
+            throw new Exception('You must supply at least an API Key String');
         }
 
         $this->endPointUrl = 'https://chargebackdb.com/api/' . $this->ApiVersion . '/api.php';
@@ -64,12 +96,44 @@ class ChargeBackAPI
 
 
 
-    public function searchDatabase($term, $type)
+    public function searchDatabaseEmail($term)
     {
-    	$data = array("searchType" => $type, "searchTerm" => $this->hashInput($term));
+        $data = array("searchType" => "email", "searchTerm" => $this->hashInput($term));
 
-    	$this->runAPICall($this->searchURL, $data);
-    	return $this->getResponse();
+        $this->runAPICall($this->searchURL, $data);
+        return $this->getResponse();
+    }
+
+    public function searchDatabaseUsername($term)
+    {
+        $data = array("searchType" => "username", "searchTerm" => $this->hashInput($term));
+
+        $this->runAPICall($this->searchURL, $data);
+        return $this->getResponse();
+    }
+
+    public function searchDatabaseIP($term)
+    {
+        $data = array("searchType" => "ip", "searchTerm" => $this->hashInput($term));
+
+        $this->runAPICall($this->searchURL, $data);
+        return $this->getResponse();
+    }
+
+    public function searchDatabasePayPalID($term)
+    {
+        $data = array("searchType" => "pp_PayerID", "searchTerm" => $this->hashInput($term));
+
+        $this->runAPICall($this->searchURL, $data);
+        return $this->getResponse();
+    }
+
+    public function searchDatabaseTxnID($term)
+    {
+        $data = array("searchType" => "txnID", "searchTerm" => $this->hashInput($term));
+
+        $this->runAPICall($this->searchURL, $data);
+        return $this->getResponse();
     }
 
 
