@@ -1,12 +1,12 @@
 <?php
 	
 
-$apiClass = new ChargeBackAPI("12345ABC");
+$apiClass = new ChargeBackAPI(array("apiKey"=>"12345ABC", "debug"=>true));
 
 echo "Email:<BR>";
 echo $apiClass->searchDatabaseEmail("typroducts24@gmail.com");
 echo "<hr>IP";
-echo $apiClass->searchDatabaseIP("127.0.1.2");
+echo $apiClass->searchDatabaseIP("127.0.10.15");
 echo "<hr>Username";
 echo $apiClass->searchDatabaseUsername("tyisobred");
 echo "<hr>PayPal Payer ID";
@@ -14,6 +14,20 @@ echo $apiClass->searchDatabasePayPalID("USD4444");
 echo "<hr>";
 echo "<hr>Txn ID";
 echo $apiClass->searchDatabaseTxnID("USD4444");
+echo "<hr>";
+echo "<br>Submitting: . . . <br>";
+$submitArray = array(
+        "amt"           => 199.90,
+        "currency"      => "USD",
+        "processor"     => "pp",
+        "username"      => "tyisobred",
+        "email"         => "typroducts24@gmail.com",
+        "pp_email"      => "typroducts24@gmail.com",
+        "ip"            => "127.0.10.15",
+        "pp_PayerID"    => "pp_Hdgh4555HGs",
+        "timestamp"     => time() - 86400
+    );
+echo $apiClass->submitReport($submitArray);
 echo "<hr>";
 
 
@@ -42,7 +56,7 @@ class ChargeBackAPI
     /**
      * Class constructor.
      *
-     * @param array $options Array of options containing an apiKey. Just one of them.
+     * @param array $options Array of options containing an apiKey and optional parameters. 
      *                       Can be also an string if you want to use an apiKey.
      */
     public function __construct($options)
@@ -95,6 +109,38 @@ class ChargeBackAPI
 
 
 
+    public function submitReport($report)
+    {
+        if(empty($report['amt']) || empty($report['currency']) || empty($report['processor']) || empty($report['username']) || empty($report['email']) || empty($report['pp_email']) || empty($report['ip']) || empty($report['pp_PayerID']) || empty($report['timestamp']))
+        {
+            throw new Exception('Missing parameter for submission');
+        }
+
+        $hashedReport = array();
+
+        $hashedReport['amt'] = $report['amt'];
+        $hashedReport['currency'] = $report['currency'];
+        $hashedReport['processor'] = $report['processor'];
+        $hashedReport['username'] = $this->hashInput($report['username']);
+        $hashedReport['email'] = $this->hashInput($report['email']);
+        $hashedReport['pp_email'] = $this->hashInput($report['pp_email']);
+        $hashedReport['ip'] = $this->hashInput($report['ip']);
+        $hashedReport['pp_PayerID'] = $this->hashInput($report['pp_PayerID']);
+        $hashedReport['timestamp'] = $report['timestamp'];
+
+        if(!empty($report['pp_fName']))
+        {
+            $hashedReport['pp_fName'] = $this->hashInput($report['pp_fName']);
+        }
+        if(!empty($report['pp_lName']))
+        {
+            $hashedReport['pp_lName'] = $this->hashInput($report['pp_lName']);
+        }
+
+
+        $this->runAPICall($this->submitURL, $hashedReport);
+        return $this->getResponse();
+    }
 
     public function searchDatabaseEmail($term)
     {
