@@ -25,6 +25,7 @@ $submitArray = array(
         "pp_email"      => "typroducts24@gmail.com",
         "ip"            => "127.0.10.15",
         "pp_PayerID"    => "pp_Hdgh4555HGs",
+        "notes"         => "Testing new API Class",
         "timestamp"     => time() - 86400
     );
 echo $apiClass->submitReport($submitArray);
@@ -108,7 +109,12 @@ class ChargeBackAPI
     }
 
 
-
+    /**
+     * Submits a report to the database 
+     *
+     * @param array $report Array of the report. Values required: amt, currency, processor, username, email, ip, timestamp, pp_email, pp_PayerID. 
+     * @return string JSON or null The result of the API Call
+     */
     public function submitReport($report)
     {
         if(empty($report['amt']) || empty($report['currency']) || empty($report['processor']) || empty($report['username']) || empty($report['email']) || empty($report['pp_email']) || empty($report['ip']) || empty($report['pp_PayerID']) || empty($report['timestamp']))
@@ -116,25 +122,43 @@ class ChargeBackAPI
             throw new Exception('Missing parameter for submission');
         }
 
+        if(strtoupper($report['currency']) != 'USD')
+        {
+            throw new Exception('Currency must be USD');
+        }
+
+        if(strtolower($report['processor']) != 'pp')
+        {
+            throw new Exception('Processor must be PayPal');
+        }
+
         $hashedReport = array();
 
         $hashedReport['amt'] = $report['amt'];
         $hashedReport['currency'] = $report['currency'];
         $hashedReport['processor'] = $report['processor'];
-        $hashedReport['username'] = $this->hashInput($report['username']);
-        $hashedReport['email'] = $this->hashInput($report['email']);
-        $hashedReport['pp_email'] = $this->hashInput($report['pp_email']);
-        $hashedReport['ip'] = $this->hashInput($report['ip']);
+        $hashedReport['username'] = $this->hashInput(trim(strtoupper($report['username'])));
+        $hashedReport['email'] = $this->hashInput(trim(strtoupper($report['email'])));
+        $hashedReport['pp_email'] = $this->hashInput(trim(strtoupper($report['pp_email'])));
+        $hashedReport['ip'] = $this->hashInput(trim(strtoupper($report['ip'])));
         $hashedReport['pp_PayerID'] = $this->hashInput($report['pp_PayerID']);
         $hashedReport['timestamp'] = $report['timestamp'];
 
         if(!empty($report['pp_fName']))
         {
-            $hashedReport['pp_fName'] = $this->hashInput($report['pp_fName']);
+            $hashedReport['pp_fName'] = $this->hashInput(trim(strtoupper($report['pp_fName'])));
         }
         if(!empty($report['pp_lName']))
         {
-            $hashedReport['pp_lName'] = $this->hashInput($report['pp_lName']);
+            $hashedReport['pp_lName'] = $this->hashInput(trim(strtoupper($report['pp_lName'])));
+        }
+        if(!empty($report['notes']))
+        {
+            $hashedReport['notes'] = $report['notes'];
+        }
+        if(!empty($report['txnID']))
+        {
+            $hashedReport['txnID'] = $report['txnID'];
         }
 
 
@@ -142,44 +166,73 @@ class ChargeBackAPI
         return $this->getResponse();
     }
 
+
+    /**
+     * Searches database for the given Email.
+     *
+     * @param string $term What is being searched
+     * @return string JSON or null The result of the API Call
+     */
     public function searchDatabaseEmail($term)
     {
-        $data = array("searchType" => "email", "searchTerm" => $this->hashInput($term));
+        $data = array("searchType" => "email", "searchTerm" => $this->hashInput(trim(strtoupper($term))));
 
-        $this->runAPICall($this->searchURL, $data);
-        return $this->getResponse();
+        return $this->runAPICall($this->searchURL, $data);
     }
 
+
+    /**
+     * Searches database for the given Username.
+     *
+     * @param string $term What is being searched
+     * @return string JSON or null The result of the API Call
+     */
     public function searchDatabaseUsername($term)
     {
-        $data = array("searchType" => "username", "searchTerm" => $this->hashInput($term));
+        $data = array("searchType" => "username", "searchTerm" => $this->hashInput(trim(strtoupper($term))));
 
-        $this->runAPICall($this->searchURL, $data);
-        return $this->getResponse();
+        return $this->runAPICall($this->searchURL, $data);
     }
 
+
+    /**
+     * Searches database for the given IP. 
+     *
+     * @param string $term What is being searched
+     * @return string JSON or null The result of the API Call
+     */
     public function searchDatabaseIP($term)
     {
-        $data = array("searchType" => "ip", "searchTerm" => $this->hashInput($term));
+        $data = array("searchType" => "ip", "searchTerm" => $this->hashInput(trim(strtoupper($term))));
 
-        $this->runAPICall($this->searchURL, $data);
-        return $this->getResponse();
+        return $this->runAPICall($this->searchURL, $data);
     }
 
+
+    /**
+     * Searches database for the given uniqiue ayPal Payer ID. This is the most determinant factor to decide trustworthiness.
+     *
+     * @param string $term What is being searched
+     * @return string JSON or null The result of the API Call
+     */
     public function searchDatabasePayPalID($term)
     {
-        $data = array("searchType" => "pp_PayerID", "searchTerm" => $this->hashInput($term));
+        $data = array("searchType" => "pp_PayerID", "searchTerm" => $this->hashInput(trim(strtoupper($term))));
 
-        $this->runAPICall($this->searchURL, $data);
-        return $this->getResponse();
+        return $this->runAPICall($this->searchURL, $data);
     }
 
+    /**
+     * Searches database for the given TxnID. This function is only going to return a value if the TxnID belongs to your account.
+     *
+     * @param string $term What is being searched
+     * @return string JSON or null The result of the API Call
+     */
     public function searchDatabaseTxnID($term)
     {
-        $data = array("searchType" => "txnID", "searchTerm" => $this->hashInput($term));
+        $data = array("searchType" => "txnID", "searchTerm" => $this->hashInput(trim(strtoupper($term))));
 
-        $this->runAPICall($this->searchURL, $data);
-        return $this->getResponse();
+        return $this->runAPICall($this->searchURL, $data);
     }
 
 
@@ -191,7 +244,7 @@ class ChargeBackAPI
      * @param int $method See constants defined at the beginning of the class
      * @return string JSON or null
      */
-    private function runAPICall($url, $data = null, $method = API_METHOD_POST)
+    private function runAPICall($url, $data = null, $method = 'API_METHOD_POST')
     {
     	$data['key'] = $this->apiKey;
         $headerData = array();
@@ -214,15 +267,15 @@ class ChargeBackAPI
             curl_setopt($curl, CURLOPT_VERBOSE, true); // Display communication with server
         }
 
-        if ($method == API_METHOD_POST) {
+        if ($method == 'API_METHOD_POST') {
             curl_setopt($curl, CURLOPT_POST, true);
-        } elseif ($method == API_METHOD_PUT) {
+        } elseif ($method == 'API_METHOD_PUT') {
             curl_setopt($curl, CURLOPT_CUSTOMREQUEST, 'PUT');
-        } elseif ($method == API_METHOD_DELETE) {
+        } elseif ($method == 'API_METHOD_DELETE') {
             curl_setopt($curl, CURLOPT_CUSTOMREQUEST, 'DELETE');
         }
 
-        if (!is_null($data) && ($method == API_METHOD_POST || $method == API_METHOD_PUT)) {
+        if (!is_null($data) && ($method == 'API_METHOD_POST' || $method == 'API_METHOD_PUT')) {
             curl_setopt($curl, CURLOPT_POSTFIELDS, http_build_query($data));
         }
 
