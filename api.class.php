@@ -1,36 +1,4 @@
 <?php
-	
-
-$apiClass = new ChargeBackAPI(array("apiKey"=>"12345ABC", "debug"=>true));
-
-echo "Email:<BR>";
-echo $apiClass->searchDatabaseEmail("typroducts24@gmail.com");
-echo "<hr>IP";
-echo $apiClass->searchDatabaseIP("127.0.10.15");
-echo "<hr>Username";
-echo $apiClass->searchDatabaseUsername("tyisobred");
-echo "<hr>PayPal Payer ID";
-echo $apiClass->searchDatabasePayPalID("USD4444");
-echo "<hr>";
-echo "<hr>Txn ID";
-echo $apiClass->searchDatabaseTxnID("USD4444");
-echo "<hr>";
-echo "<br>Submitting: . . . <br>";
-$submitArray = array(
-        "amt"           => 199.90,
-        "currency"      => "USD",
-        "processor"     => "pp",
-        "username"      => "tyisobred",
-        "email"         => "typroducts24@gmail.com",
-        "pp_email"      => "typroducts24@gmail.com",
-        "ip"            => "127.0.10.15",
-        "pp_PayerID"    => "pp_Hdgh4555HGs",
-        "notes"         => "Testing new API Class",
-        "timestamp"     => time() - 86400
-    );
-echo $apiClass->submitReport($submitArray);
-echo "<hr>";
-
 
 // Future proofing for future use
 define('API_METHOD_POST', 1);
@@ -322,7 +290,7 @@ class ChargeBackAPI
     private function hashInput($input)
     {
     	$hashedVal = $input;
-        for($i = 1; $i < 10; $i++)
+        for($i = 1; $i < 10000; $i++)
         {
             $hashedVal = hash("sha256", "Charg" . $i . "eSalt" . $hashedVal . "BackSalt!@$");
         }
